@@ -13,12 +13,38 @@ from .db import get_db
 FRONT_MATTER = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.S)
 
 
+def parse_front_matter(block):
+    """YAML, а если он не разобрался — простой разбор «ключ: значение».
+
+    Обычная причина сбоя — двоеточие в заголовке («Блог: как я его писал»):
+    по правилам YAML такую строку нужно брать в кавычки, но забывают об этом все.
+    """
+    try:
+        data = yaml.safe_load(block)
+        if isinstance(data, dict):
+            return data
+    except yaml.YAMLError:
+        pass
+
+    data = {}
+    for line in block.splitlines():
+        if not line.strip() or line.lstrip().startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key, value = key.strip(), value.strip().strip("'\"")
+        if value.startswith("[") and value.endswith("]"):
+            data[key] = [v.strip().strip("'\"") for v in value[1:-1].split(",") if v.strip()]
+        else:
+            data[key] = value
+    return data
+
+
 def parse_md_file(path):
     text = Path(path).read_text(encoding="utf-8-sig").replace("\r\n", "\n")
     meta = {}
     m = FRONT_MATTER.match(text)
     if m:
-        meta = yaml.safe_load(m.group(1)) or {}
+        meta = parse_front_matter(m.group(1))
         text = text[m.end():]
     title = meta.get("title")
     if not title:
