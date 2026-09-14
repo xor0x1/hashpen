@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ site.title }}{% endblock %}
+{% block description %}{{ page.excerpt if page else site.description }}{% endblock %}
+{% block og_title %}{{ title }}{% endblock %}
+{% block og_description %}{{ page.excerpt if page else site.description }}{% endblock %}
+{% block head_extra %}
+{% if page and page.status == 'draft' %}<meta name="robots" content="noindex">{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="shell">
+  <div class="article-header">
+    <a class="back-link" href="{{ url_for('blog.index') }}">← Все статьи</a>
+    <h1 class="article-title">{{ title }}</h1>
+    {% if page and page.status == 'draft' %}<div class="meta-row"><span class="draft-label">черновик</span></div>{% endif %}
+    {% if page and is_admin %}
+    <div class="article-actions">
+      <a class="btn btn--sm" href="{{ url_for('admin.edit_page', slug=page.slug) }}">Редактировать</a>
+      <form method="post" action="{{ url_for('admin.delete_page', slug=page.slug) }}" class="inline-form"
+            onsubmit="return confirm('Удалить страницу «{{ page.title }}»? Это действие нельзя отменить.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn--sm btn--danger" type="submit">Удалить</button>
+      </form>
+      <a class="btn btn--sm btn--ghost" href="{{ url_for('admin.pages') }}">Все страницы</a>
+    </div>
+    {% endif %}
+    {% if page and page.toc | length > 1 %}
+    <details class="toc">
+      <summary>Оглавление</summary>
+      <ul class="toc__list">
+        {% for t in page.toc %}<li class="{{ 'toc-h3' if t.level == 3 }}"><a href="#{{ t.id }}">{{ t.text }}</a></li>{% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+  <article class="article-body">{{ body_html | safe }}</article>
+</div>
+{% endblock %}

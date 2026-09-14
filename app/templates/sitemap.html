@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Карта сайта — {{ site.title }}{% endblock %}
+{% block content %}
+<div class="shell">
+  <div class="article-header">
+    <a class="back-link" href="{{ url_for('blog.index') }}">← Все статьи</a>
+    <h1 class="article-title">Карта сайта</h1>
+  </div>
+  <div class="article-body sitemap">
+    {% if pages %}
+    <h2>Страницы</h2>
+    <ul>
+      {% for p in pages %}<li><a href="{{ url_for('blog.page', slug=p.slug) }}">{{ p.title }}</a></li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% for year, items in groups.items() %}
+    <h2>{{ year }}</h2>
+    <ul>
+      {% for a in items %}<li><a href="{{ url_for('blog.article', slug=a.slug) }}">{{ a.title }}</a> <span class="mono sitemap__date">{{ a.published_at | ru_date }}</span></li>{% endfor %}
+    </ul>
+    {% else %}
+    <p>Пока нет статей.</p>
+    {% endfor %}
+    {% if sidebar_tags %}
+    <h2>Теги</h2>
+    <p class="sitemap__tags">{% for t in sidebar_tags %}<a class="tag-label" href="{{ url_for('blog.tag', slug=t.slug) }}">#{{ t.name }}</a> {% endfor %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

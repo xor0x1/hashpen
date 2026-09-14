@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ site.title }} — блог об IT{% endblock %}</title>
+<meta name="description" content="{% block description %}{{ site.description }}{% endblock %}">
+{% block head_extra %}{% endblock %}
+{% set base_url = config.SITE_URL or request.url_root.rstrip('/') %}
+<meta property="og:site_name" content="{{ site.title }}">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:title" content="{% block og_title %}{{ site.title }} — блог об IT{% endblock %}">
+<meta property="og:description" content="{% block og_description %}{{ site.description }}{% endblock %}">
+<meta property="og:url" content="{{ base_url }}{{ request.path }}">
+<meta property="og:image" content="{% block og_image %}{{ base_url }}{{ url_for('static', filename='og-image.png') }}{% endblock %}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="{{ url_for('blog.rss') }}">
+<script>try{var t=localStorage.getItem("blog-theme")||"{{ site.default_theme }}";if(t==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>{{ site.theme_css }}{{ site.custom_css }}</style>
+</head>
+<body{% if site.metrika_id %} data-metrika-id="{{ site.metrika_id }}"{% endif %}>
+
+<header class="site-header">
+  <button class="icon-btn menu-btn" id="menu-toggle" aria-label="Меню" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+  <div class="brand">
+    <span class="brand__mark">{{ site.title[:1] }}</span>
+    <span class="brand__title"><a href="{{ url_for('blog.index') }}">{{ site.title }}</a></span>
+  </div>
+  <form class="header-search" action="{{ url_for('blog.search') }}" method="get" role="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" name="q" id="search-input" placeholder="Поиск по статьям…" value="{{ query or '' }}" aria-label="Поиск по статьям">
+  </form>
+  <div class="header-spacer"></div>
+  <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Переключить тему" title="Переключить тему">
+    <span class="theme-icon theme-icon--dark">☾</span><span class="theme-icon theme-icon--light">☀︎</span>
+  </button>
+  {% if is_admin %}
+  <a class="btn btn--accent" href="{{ url_for('admin.new') }}"><span>+</span><span class="btn-label">Написать статью</span></a>
+  <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn--sm" type="submit">Выйти</button>
+  </form>
+  {% endif %}
+</header>
+
+<div class="sidebar-overlay" data-open="false"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" data-open="false">
+    <a class="nav-item" href="{{ url_for('blog.index') }}" aria-current="{{ 'true' if request.endpoint == 'blog.index' else 'false' }}">
+      <span class="dot"></span><span class="label">Все статьи</span><span class="count">{{ total_articles }}</span>
+    </a>
+    {% for p in sidebar_pages %}
+    <a class="nav-item nav-item--page" href="{{ url_for('blog.page', slug=p.slug) }}"
+       aria-current="{{ 'true' if request.path == '/' ~ p.slug else 'false' }}">
+      <span class="dot"></span><span class="label">{{ p.title }}</span>
+      {% if p.status == 'draft' %}<span class="count">черновик</span>{% endif %}
+    </a>
+    {% endfor %}
+    {% if is_admin %}
+    <a class="nav-item nav-item--admin" href="{{ url_for('admin.pages') }}">
+      <span class="dot"></span><span class="label">Страницы сайта</span><span class="count">⚙</span>
+    </a>
+    <a class="nav-item nav-item--admin" href="{{ url_for('admin.settings_page') }}">
+      <span class="dot"></span><span class="label">Настройки сайта</span><span class="count">⚙</span>
+    </a>
+    {% endif %}
+    {% if sidebar_tags %}
+    <div class="sidebar-heading">Теги</div>
+    {% for t in sidebar_tags %}
+    <a class="nav-item" href="{{ url_for('blog.tag', slug=t.slug) }}" aria-current="{{ 'true' if active_tag and active_tag.slug == t.slug else 'false' }}">
+      <span class="dot"></span><span class="label">#{{ t.name }}</span><span class="count">{{ t.count }}</span>
+    </a>
+    {% endfor %}
+    {% endif %}
+  </aside>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+    <footer class="site-footer shell">
+      <span>{{ site.title }} &middot; {{ site.tagline }}</span>
+      <nav class="footer-links" aria-label="Служебные ссылки">
+        {% for p in footer_pages %}<a href="{{ url_for('blog.page', slug=p.slug) }}">{{ p.title }}</a>{% endfor %}
+        <a href="{{ url_for('blog.sitemap_page') }}">Карта сайта</a>
+        <a href="{{ url_for('blog.privacy') }}">Политика конфиденциальности</a>
+        <a href="{{ url_for('blog.rss') }}">RSS</a>
+        <button type="button" class="link-btn" id="cookie-settings">Настройки cookie</button>
+      </nav>
+    </footer>
+  </main>
+</div>
+
+<div class="cookie-banner" id="cookie-banner" role="region" aria-label="Уведомление о cookies" hidden>
+  <p class="cookie-banner__text">Мы используем cookies для улучшения работы сайта. Подробности в <a href="{{ url_for('blog.privacy') }}">Политике конфиденциальности</a>.</p>
+  <div class="cookie-banner__actions">
+    <button type="button" class="btn btn--accent" data-consent="accepted">Принять</button>
+    <button type="button" class="btn" data-consent="declined">Отклонить</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+{# языки вне базового набора highlight.js #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/nginx.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js" defer></script>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

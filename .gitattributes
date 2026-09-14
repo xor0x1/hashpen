@@ -1,0 +1,13 @@
+# В репозитории и в рабочей копии — всегда LF: проект разворачивается на Linux,
+# а install.sh с CRLF там не запустится.
+* text=auto eol=lf
+
+# Двоичные файлы не трогать
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.ico binary
+
+# Скрипты — только LF, без вариантов
+*.sh text eol=lf

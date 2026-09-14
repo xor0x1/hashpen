@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Страницы — {{ site.title }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="shell">
+  <div class="article-header">
+    <a class="back-link" href="{{ url_for('blog.index') }}">← Все статьи</a>
+    <h1 class="article-title">Страницы</h1>
+    <div class="article-actions">
+      <a class="btn btn--accent btn--sm" href="{{ url_for('admin.new_page') }}">+ Новая страница</a>
+    </div>
+  </div>
+
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+  <p class="auth-note auth-note--{{ category }}">{{ message }}</p>
+  {% endfor %}
+
+  {% if pages %}
+  <ul class="pages-list">
+    {% for p in pages %}
+    <li class="pages-list__row">
+      <a class="pages-list__title" href="{{ url_for('blog.page', slug=p.slug) }}">{{ p.title }}</a>
+      <span class="mono pages-list__slug">/{{ p.slug }}</span>
+      {% if p.status == 'draft' %}<span class="draft-label">черновик</span>{% endif %}
+      {% if p.in_sidebar %}<span class="mono pages-list__flag">в сайдбаре</span>{% endif %}
+      <span class="pages-list__spacer"></span>
+      <a class="btn btn--sm" href="{{ url_for('admin.edit_page', slug=p.slug) }}">Редактировать</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty-state">Страниц пока нет. Например, «О себе» или «Контакты».</div>
+  {% endif %}
+</div>
+{% endblock %}

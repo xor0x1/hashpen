@@ -1,0 +1,9 @@
+{% macro meta(a) -%}
+<div class="meta-row">
+  <time class="mono" datetime="{{ a.published_at }}">{{ a.published_at | ru_date }}</time><span>&middot;</span><span>{{ a.reading_minutes | reading }}</span>
+  {%- if a.status == 'draft' %}<span class="draft-label">черновик</span>{% endif %}
+  {%- if a.tags %}
+  <span class="tags">{% for t in a.tags %}<a class="tag-label" href="{{ url_for('blog.tag', slug=t.slug) }}">#{{ t.name }}</a>{% endfor %}</span>
+  {%- endif %}
+</div>
+{%- endmacro %}

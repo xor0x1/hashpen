@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% set kind = kind | default('article') %}
+{% set is_page = kind == 'page' %}
+{% set what = 'страница' if is_page else 'статья' %}
+{% block title %}{{ ('Новая страница' if is_page else 'Новая статья') if mode == 'new' else 'Правка: ' ~ a.title }} — {{ site.title }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="shell editor-shell">
+  <form method="post" class="editor"
+        action="{% if is_page %}{{ url_for('admin.create_page') if mode == 'new' else url_for('admin.update_page', slug=a.slug) }}{% else %}{{ url_for('admin.create') if mode == 'new' else url_for('admin.update', slug=a.slug) }}{% endif %}"
+        data-preview-url="{{ url_for('admin.preview') }}" data-upload-url="{{ url_for('admin.upload') }}"
+        data-key="{{ a.slug or 'new' }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="editor-top">
+      {% if mode == 'edit' %}
+      <a class="back-link" href="{{ url_for('blog.page', slug=a.slug) if is_page else url_for('blog.article', slug=a.slug) }}">← Назад</a>
+      {% else %}
+      <a class="back-link" href="{{ url_for('admin.pages') if is_page else url_for('blog.index') }}">← Назад</a>
+      {% endif %}
+      <h1 class="editor-title">{% if mode == 'new' %}Новая {{ what }}{% else %}Правка {{ 'страницы' if is_page else 'статьи' }}{% endif %}</h1>
+    </div>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="auth-note auth-note--{{ category }}">{{ message }}</p>
+    {% endfor %}
+
+    <div class="field">
+      <label for="title">Заголовок</label>
+      <input type="text" id="title" name="title" value="{{ a.title }}" placeholder="{{ 'Название страницы' if is_page else 'О чём статья' }}" autofocus required>
+    </div>
+
+    <div class="field-row">
+      {% if is_page %}
+      <div class="field" style="flex: 2 1 240px">
+        <label for="slug">Адрес страницы</label>
+        <input type="text" id="slug" name="slug" value="{{ a.slug }}" placeholder="из заголовка">
+        <p class="field-hint">Получится {{ (config.SITE_URL or request.url_root.rstrip('/')) }}/<span id="slug-preview">{{ a.slug or 'адрес' }}</span></p>
+      </div>
+      <div class="field" style="flex: 0 1 140px">
+        <label for="sort_order">Порядок</label>
+        <input type="number" id="sort_order" name="sort_order" value="{{ a.sort_order }}" min="0" max="999">
+      </div>
+      {% else %}
+      <div class="field">
+        <label for="published_at">Дата</label>
+        <input type="date" id="published_at" name="published_at" value="{{ a.published_at }}">
+      </div>
+      <div class="field" style="flex: 2 1 240px">
+        <label for="tags">Теги через запятую</label>
+        <input type="text" id="tags" name="tags" value="{{ a.tags | map(attribute='name') | join(', ') }}" placeholder="python, backend">
+      </div>
+      <div class="field" style="flex: 1 1 180px">
+        <label for="slug">Адрес статьи</label>
+        <input type="text" id="slug" name="slug" value="{{ a.slug }}" placeholder="из заголовка">
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="field">
+      <div class="editor-tabs">
+        <button type="button" data-tab="write" aria-selected="true">Текст</button>
+        <button type="button" data-tab="preview" aria-selected="false">Превью</button>
+        <span class="editor-tools">
+          <button type="button" class="btn btn--sm btn--ghost" id="insert-image">Вставить картинку</button>
+          <input type="file" id="image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+        </span>
+      </div>
+      <textarea class="md-input" id="body_md" name="body_md" required
+                placeholder="## Заголовок раздела&#10;&#10;Текст {{ 'страницы' if is_page else 'статьи' }} в markdown…">{{ a.body_md }}</textarea>
+      <div class="md-preview article-body" id="preview" hidden></div>
+      <p class="editor-hint" id="editor-hint">Картинку можно перетащить в поле текста или вставить из буфера (Ctrl+V).</p>
+    </div>
+
+    <div class="editor-footer">
+      <label class="switch">
+        <input type="checkbox" name="status" value="draft" {{ 'checked' if a.status == 'draft' }}>
+        <span>Черновик — не виден читателям</span>
+      </label>
+      {% if is_page %}
+      <label class="switch">
+        <input type="checkbox" name="in_sidebar" value="1" {{ 'checked' if a.in_sidebar }}>
+        <span>Показывать в сайдбаре</span>
+      </label>
+      {% endif %}
+      <span class="editor-footer__spacer"></span>
+      <button class="btn btn--accent" type="submit">Сохранить</button>
+    </div>
+  </form>
+
+  {% if mode == 'edit' %}
+  <form method="post" class="editor-delete"
+        action="{{ url_for('admin.delete_page', slug=a.slug) if is_page else url_for('admin.delete', slug=a.slug) }}"
+        onsubmit="return confirm('Удалить {{ what }} «{{ a.title }}»? Это действие нельзя отменить.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn--sm btn--danger" type="submit">Удалить {{ 'страницу' if is_page else 'статью' }}</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='editor.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Настройки сайта — {{ site.title }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="shell editor-shell">
+  <div class="editor-top">
+    <a class="back-link" href="{{ url_for('blog.index') }}">← Все статьи</a>
+    <h1 class="editor-title">Настройки сайта</h1>
+  </div>
+
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+  <p class="auth-note auth-note--{{ category }}">{{ message }}</p>
+  {% endfor %}
+
+  <form method="post" class="editor" action="{{ url_for('admin.save_settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h2 class="settings-heading">Общее</h2>
+
+    <div class="field">
+      <label for="title">Название сайта</label>
+      <input type="text" id="title" name="title" value="{{ s.title }}" required>
+    </div>
+
+    <div class="field">
+      <label for="tagline">Подзаголовок</label>
+      <input type="text" id="tagline" name="tagline" value="{{ s.tagline }}">
+      <p class="field-hint">Виден в подвале рядом с названием.</p>
+    </div>
+
+    <div class="field">
+      <label for="description">Описание для поисковиков</label>
+      <input type="text" id="description" name="description" value="{{ s.description }}">
+      <p class="field-hint">Показывается в выдаче и в превью ссылок, до 160 символов.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field" style="flex: 2 1 240px">
+        <label for="contact_email">Почта для связи</label>
+        <input type="text" id="contact_email" name="contact_email" value="{{ s.contact_email }}" placeholder="admin@example.ru">
+        <p class="field-hint">Подставляется в политику конфиденциальности.</p>
+      </div>
+      <div class="field" style="flex: 1 1 180px">
+        <label for="metrika_id">Номер Яндекс.Метрики</label>
+        <input type="text" id="metrika_id" name="metrika_id" value="{{ s.metrika_id }}" placeholder="12345678" inputmode="numeric">
+        <p class="field-hint">Пусто — счётчика нет.</p>
+      </div>
+    </div>
+
+    <h2 class="settings-heading">Оформление</h2>
+
+    <div class="field-row">
+      <div class="field" style="flex: 1 1 200px">
+        <label for="accent_dark">Акцент в тёмной теме</label>
+        <span class="color-field">
+          <input type="color" id="accent_dark_picker" value="{{ s.accent_dark }}" data-for="accent_dark" aria-label="Выбрать цвет">
+          <input type="text" id="accent_dark" name="accent_dark" value="{{ s.accent_dark }}" pattern="#[0-9a-fA-F]{6}">
+        </span>
+      </div>
+      <div class="field" style="flex: 1 1 200px">
+        <label for="accent_light">Акцент в светлой теме</label>
+        <span class="color-field">
+          <input type="color" id="accent_light_picker" value="{{ s.accent_light }}" data-for="accent_light" aria-label="Выбрать цвет">
+          <input type="text" id="accent_light" name="accent_light" value="{{ s.accent_light }}" pattern="#[0-9a-fA-F]{6}">
+        </span>
+        <p class="field-hint">Возьмите цвет темнее: на белом фоне светлый плохо читается.</p>
+      </div>
+      <div class="field" style="flex: 1 1 180px">
+        <label for="default_theme">Тема по умолчанию</label>
+        <select id="default_theme" name="default_theme">
+          <option value="dark" {{ 'selected' if s.default_theme == 'dark' }}>Тёмная</option>
+          <option value="light" {{ 'selected' if s.default_theme == 'light' }}>Светлая</option>
+        </select>
+        <p class="field-hint">Для тех, кто ещё не переключал тему сам.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="custom_css">Свой CSS</label>
+      <textarea class="md-input" id="custom_css" name="custom_css" spellcheck="false"
+                placeholder=".article-title { letter-spacing: -0.02em; }">{{ s.custom_css }}</textarea>
+      <p class="field-hint">Добавляется в конец стилей, поэтому перебивает стандартные. Ошибка в CSS ломает только оформление — текст сайта останется на месте.</p>
+    </div>
+
+    <div class="editor-footer">
+      <span class="editor-footer__spacer"></span>
+      <button class="btn btn--accent" type="submit">Сохранить</button>
+    </div>
+  </form>
+
+  {% if s.custom_css %}
+  <form method="post" action="{{ url_for('admin.reset_css') }}" class="editor-delete"
+        onsubmit="return confirm('Очистить свой CSS? Оформление вернётся к стандартному.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn--sm btn--danger" type="submit">Очистить свой CSS</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('input[type=color][data-for]').forEach(function (picker) {
+  var field = document.getElementById(picker.getAttribute('data-for'));
+  picker.addEventListener('input', function () { field.value = picker.value; });
+  field.addEventListener('input', function () {
+    if (/^#[0-9a-fA-F]{6}$/.test(field.value)) picker.value = field.value;
+  });
+});
+</script>
+{% endblock %}

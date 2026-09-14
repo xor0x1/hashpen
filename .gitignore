@@ -1,0 +1,14 @@
+# секреты и данные — никогда не коммитить
+.env
+instance/
+*.db
+*.db-wal
+*.db-shm
+backups/
+
+# окружение и мусор
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store

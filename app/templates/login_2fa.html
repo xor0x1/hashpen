@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Код подтверждения — {{ site.title }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="shell">
+  <div class="auth-card">
+    <h1 class="auth-card__title">Код подтверждения</h1>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="auth-note auth-note--{{ category }}">{{ message }}</p>
+    {% endfor %}
+    <form method="post" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="code">Шесть цифр из приложения</label>
+        <input type="text" id="code" name="code" class="code-input" inputmode="numeric" autocomplete="one-time-code"
+               pattern="[0-9a-z\- ]{6,12}" maxlength="12" autofocus required>
+      </div>
+      <button class="btn btn--accent" type="submit">Войти</button>
+    </form>
+    <p class="auth-hint">Нет доступа к телефону — введите один из резервных кодов.</p>
+  </div>
+</div>
+{% endblock %}

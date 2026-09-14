@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ base }}{{ url_for('blog.index') }}</loc></url>
+  {%- for a in articles %}
+  <url><loc>{{ base }}{{ url_for('blog.article', slug=a.slug) }}</loc><lastmod>{{ a.updated_at[:10] }}</lastmod></url>
+  {%- endfor %}
+  {%- for p in pages %}
+  <url><loc>{{ base }}{{ url_for('blog.page', slug=p.slug) }}</loc></url>
+  {%- endfor %}
+  {%- for t in sidebar_tags %}
+  <url><loc>{{ base }}{{ url_for('blog.tag', slug=t.slug) }}</loc></url>
+  {%- endfor %}
+</urlset>

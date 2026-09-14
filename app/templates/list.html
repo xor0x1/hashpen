@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import meta %}
+
+{% block title %}{% if active_tag %}#{{ active_tag.name }} — {{ site.title }}{% elif query is defined %}Поиск: {{ query }} — {{ site.title }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block head_extra %}{% if query is defined %}<meta name="robots" content="noindex">{% endif %}{% endblock %}
+
+{% block content %}
+<div class="shell">
+  {% if active_tag %}
+  <p class="filter-note">Тег: <strong>#{{ active_tag.name }}</strong> &middot; <a href="{{ url_for('blog.index') }}">сбросить</a></p>
+  {% elif query is defined %}
+  <p class="filter-note">Поиск: <strong>{{ query }}</strong> &middot; найдено {{ articles | length }} &middot; <a href="{{ url_for('blog.index') }}">сбросить</a></p>
+  {% endif %}
+
+  {% if articles %}
+  <ul class="article-list">
+    {% for a in articles %}
+    <li class="article-row">
+      <h2 class="article-row__title"><a href="{{ url_for('blog.article', slug=a.slug) }}">{{ a.title_marked or a.title }}</a></h2>
+      {{ meta(a) }}
+      <p class="article-row__excerpt">{{ a.snippet or a.excerpt }}</p>
+      <a class="read-more" href="{{ url_for('blog.article', slug=a.slug) }}">Читать →</a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% if pages > 1 %}
+  <nav class="pager" aria-label="Страницы">
+    {% if page > 1 %}<a class="btn btn--sm" href="?page={{ page - 1 }}">← Новее</a>{% endif %}
+    <span class="mono">{{ page }} / {{ pages }}</span>
+    {% if page < pages %}<a class="btn btn--sm" href="?page={{ page + 1 }}">Старее →</a>{% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    {% if query is defined and query %}Ничего не найдено.{% elif query is defined %}Введите запрос в строку поиска.{% else %}Пока нет статей.{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

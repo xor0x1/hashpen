@@ -1,0 +1,6 @@
+Flask>=3.0,<4
+markdown-it-py>=3.0
+python-dotenv>=1.0
+PyYAML>=6.0
+gunicorn>=22.0
+# QR-код для 2FA (необязательно): pip install qrcode

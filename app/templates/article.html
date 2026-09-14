@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import meta %}
+
+{% block title %}{{ a.title }} — {{ site.title }}{% endblock %}
+{% block description %}{{ a.excerpt }}{% endblock %}
+{% block head_extra %}
+{% set base = config.SITE_URL or request.url_root.rstrip('/') %}
+<link rel="canonical" href="{{ base ~ url_for('blog.article', slug=a.slug) }}">
+{% if a.status == 'draft' %}<meta name="robots" content="noindex">{% endif %}
+<meta property="article:published_time" content="{{ a.published_at }}">
+{% for t in a.tags %}<meta property="article:tag" content="{{ t.name }}">
+{% endfor %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": a.title,
+  "description": a.excerpt,
+  "datePublished": a.published_at,
+  "dateModified": a.updated_at[:10] if a.updated_at else a.published_at,
+  "url": base ~ url_for('blog.article', slug=a.slug),
+  "image": og_image,
+  "keywords": a.tags | map(attribute='name') | join(', '),
+  "inLanguage": "ru-RU",
+  "author": {"@type": "Person", "name": site.title},
+  "publisher": {"@type": "Organization", "name": site.title}
+} | tojson }}
+</script>
+{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ a.title }}{% endblock %}
+{% block og_description %}{{ a.excerpt }}{% endblock %}
+{% block og_image %}{{ og_image }}{% endblock %}
+
+{% block content %}
+<div class="shell">
+  <div class="article-header">
+    <a class="back-link" href="{{ url_for('blog.index') }}">← Все статьи</a>
+    <h1 class="article-title">{{ a.title }}</h1>
+    {{ meta(a) }}
+    <div class="article-actions">
+      {% if is_admin %}
+      <a class="btn btn--sm" href="{{ url_for('admin.edit', slug=a.slug) }}">Редактировать</a>
+      <form method="post" action="{{ url_for('admin.delete', slug=a.slug) }}" class="inline-form"
+            onsubmit="return confirm('Удалить статью «{{ a.title }}»? Это действие нельзя отменить.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn--sm btn--danger" type="submit">Удалить</button>
+      </form>
+      {% endif %}
+      <button type="button" class="btn btn--sm btn--ghost" id="share-article-btn">Скопировать ссылку</button>
+    </div>
+    {% if a.toc | length > 1 %}
+    <details class="toc">
+      <summary>Оглавление</summary>
+      <ul class="toc__list">
+        {% for t in a.toc %}<li class="{{ 'toc-h3' if t.level == 3 }}"><a href="#{{ t.id }}">{{ t.text }}</a></li>{% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+  <article class="article-body">{{ a.body_html | safe }}</article>
+</div>
+{% endblock %}

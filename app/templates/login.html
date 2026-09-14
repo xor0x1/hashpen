@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Вход — {{ site.title }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="shell">
+  <div class="auth-card">
+    <h1 class="auth-card__title">Вход автора</h1>
+
+    {% if not_configured %}
+    <p class="auth-note">Вход ещё не настроен. Выполните на сервере <code>flask --app wsgi set-password</code> и <code>flask --app wsgi setup-2fa</code>, затем перезапустите сайт.</p>
+    {% elif blocked %}
+    <p class="auth-note auth-note--error">Слишком много неудачных попыток. Подождите 15 минут.</p>
+    {% else %}
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="auth-note auth-note--{{ category }}">{{ message }}</p>
+    {% endfor %}
+    <form method="post" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" autofocus required>
+      </div>
+      <button class="btn btn--accent" type="submit">Далее</button>
+    </form>
+    <p class="auth-hint">Второй шаг — код из приложения-аутентификатора.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
